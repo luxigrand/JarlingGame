@@ -1,0 +1,112 @@
+<style>
+    /* OYUN EKRANI STİLLERİ */
+    #ui-layer {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        z-index: 5;
+    }
+    .stat-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* Oyun içindeki oynadığımız karakter */
+    #player {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 500px;
+        display: flex;
+        align-items: flex-end;
+        transition: transform 0.1s;
+    }
+
+    /* Oyuncu Görseli Temsili (Ali) */
+    .player-body {
+        width: 250px;
+        height: 250px;
+        background-color: #81c784; 
+        border: 2px solid #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 30px;
+        position: absolute;
+        left: 0;
+        bottom: 0;
+    }
+    
+    /* Kılıç */
+    .weapon {
+        width: 378px;
+        position: absolute;
+        left: 105px;
+        bottom: 0;
+        transform-origin: 0 100%;
+        transform: rotate(-45deg);
+        transition: transform 0.1s;
+        object-fit: contain;
+    }
+    
+    /* Saldırı Animasyonu - Sadece kılıç hareket eder, karakter sabit kalır */
+    .attacking .weapon {
+        transform: rotate(45deg);
+        transform-origin: 0 100%;
+    }
+
+    /* Düşmanlar */
+    .enemy {
+        position: absolute;
+        bottom: 50px;
+        width: 60px;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 40px;
+        transform: rotate(90deg);
+    }
+
+    /* Vuruş Efekti */
+    .hit-effect {
+        position: absolute;
+        font-size: 30px;
+        color: red;
+        font-weight: bold;
+        animation: floatUp 0.5s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+        0% { transform: translateY(0); opacity: 1; }
+        100% { transform: translateY(-30px); opacity: 0; }
+    }
+</style>
+
+<!-- Oyun İçi Ekran -->
+<div id="game-screen" class="screen hidden">
+    <div id="ui-layer">
+        <div class="stat-box">
+            <span>kendini koru ali</span>
+        </div>
+        <div class="stat-box">
+            <span>💰 <span id="score">0,00</span></span>
+            <span id="health" style="color:red;"></span>
+        </div>
+    </div>
+
+    <div id="player">
+        <img src="assets/character-ali.png" alt="Ali" style="width: 100%; height: 100%; object-fit: contain;">
+        <img src="assets/kilic.png" alt="Kılıç" class="weapon">
+    </div>
+
+    <div id="enemies-container"></div>
+</div>
+

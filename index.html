@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jarling - Ritim Savaşı</title>
+    <link rel="icon" type="image/webp" href="assets/Gemini_Generated_Image_o8cwhno8cwhno8cw.webp">
+    <link rel="stylesheet" href="css/common.css">
+</head>
+<body>
+
+<div id="game-container">
+
+    <!-- Kararma Efekti Overlay -->
+    <div class="death-overlay" id="death-overlay"></div>
+
+    <!-- Ses Efektleri -->
+    <div id="audio-container">
+        <!-- Ses Efektleri - Hazır Ücretsiz Linkler -->
+        <!-- Arka Plan Müziği (Oyun sırasında sürekli) -->
+        <audio id="background-music" preload="auto" loop>
+            <!-- Ücretsiz oyun müziği -->
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" type="audio/mpeg">
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+        </audio>
+
+        <!-- Oyun Sonu (Ölüm) Ses Efekti -->
+        <audio id="death-sound" preload="auto">
+            <!-- Ücretsiz ölüm/game over sesi -->
+            <source src="https://opengameart.org/sites/default/files/audio_preview/game-over-sound-effect.mp3" type="audio/mpeg">
+            <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" type="audio/mpeg">
+        </audio>
+
+        <!-- Kılıç Vurma Ses Efekti -->
+        <audio id="sword-hit-sound" preload="auto">
+            <!-- Ücretsiz kılıç/metal çarpma sesi -->
+            <source src="https://opengameart.org/sites/default/files/audio_preview/sword-hit.ogg" type="audio/ogg">
+            <source src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-one/sword_clash_metal.mp3" type="audio/mpeg">
+        </audio>
+
+        <!-- Ateş Topu Çarpma (Düşmana Vurma) Ses Efekti -->
+        <audio id="fireball-hit-sound" preload="auto">
+            <!-- Ücretsiz patlama/magic impact sesi -->
+            <source src="https://opengameart.org/sites/default/files/audio_preview/fireball_0.ogg" type="audio/ogg">
+            <source src="https://opengameart.org/sites/default/files/audio_preview/magic-impact.ogg" type="audio/ogg">
+        </audio>
+
+        <!-- Hasar Alma Ses Efekti (Karaktere hasar geldiğinde) -->
+        <audio id="damage-sound" preload="auto">
+            <!-- Ücretsiz hasar alma sesi -->
+            <source src="https://opengameart.org/sites/default/files/audio_preview/hit_0.ogg" type="audio/ogg">
+            <source src="https://opengameart.org/sites/default/files/audio_preview/hurt_0.ogg" type="audio/ogg">
+        </audio>
+    </div>
+
+    <!-- Arkaplan Karakterler -->
+    <img src="assets/character-ali.png" alt="Character Left" class="character-left">
+    <img src="assets/character_right.png" alt="Character Right" class="character-right">
+
+    <!-- Başlangıç Ekranı -->
+    <div id="start-screen-container">
+        <style>
+            /* GİRİŞ EKRANI STİLLERİ */
+            #start-screen h1 {
+                font-size: 60px;
+                color: #4a3b2a;
+                text-shadow: 2px 2px #fff;
+                margin-bottom: 20px;
+                background-color: rgba(0,0,0,0.1);
+                padding: 10px 30px;
+                border-radius: 10px;
+            }
+            .instruction {
+                margin-top: 20px;
+                font-size: 14px;
+                opacity: 0.8;
+            }
+        </style>
+
+        <!-- Başlangıç Ekranı -->
+        <div id="start-screen" class="screen">
+            <img src="assets/logo.png" alt="Logo" style="height: 250px; object-fit: cover;">
+            <button class="btn" onclick="startGame()">başla</button>        
+            <div class="instruction">darbe vurmak için SPACE'ye bas</div>
+        </div>
+    </div>
+
+    <!-- Oyun İçi Ekran -->
+    <div id="game-screen-container">
+        <style>
+            /* OYUN EKRANI STİLLERİ */
+            #ui-layer {
+                position: absolute;
+                top: 10px;
+                left: 10px;
+                right: 10px;
+                display: flex;
+                justify-content: space-between;
+                font-size: 20px;
+                font-weight: bold;
+                color: #333;
+                z-index: 5;
+            }
+            .stat-box {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            /* Oyun içindeki oynadığımız karakter */
+            #player {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                height: 500px;
+                display: flex;
+                align-items: flex-end;
+                transition: transform 0.1s;
+            }
+
+            /* Oyuncu Görseli Temsili (Ali) */
+            .player-body {
+                width: 250px;
+                height: 250px;
+                background-color: #81c784; 
+                border: 2px solid #fff;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 30px;
+                position: absolute;
+                left: 0;
+                bottom: 0;
+            }
+            
+            /* Kılıç */
+            .weapon {
+                width: 378px;
+                position: absolute;
+                left: 105px;
+                bottom: 0;
+                transform-origin: 0 100%;
+                transform: rotate(-45deg);
+                transition: transform 0.1s;
+                object-fit: contain;
+            }
+            
+            /* Saldırı Animasyonu - Sadece kılıç hareket eder, karakter sabit kalır */
+            .attacking .weapon {
+                transform: rotate(45deg);
+                transform-origin: 0 100%;
+            }
+
+            /* Düşmanlar */
+            .enemy {
+                position: absolute;
+                bottom: 50px;
+                width: 60px;
+                height: 80px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 40px;
+                transform: rotate(90deg);
+            }
+
+            /* Vuruş Efekti */
+            .hit-effect {
+                position: absolute;
+                font-size: 30px;
+                color: red;
+                font-weight: bold;
+                animation: floatUp 0.5s ease-out forwards;
+            }
+
+            @keyframes floatUp {
+                0% { transform: translateY(0); opacity: 1; }
+                100% { transform: translateY(-30px); opacity: 0; }
+            }
+        </style>
+
+        <!-- Oyun İçi Ekran -->
+        <div id="game-screen" class="screen hidden">
+            <div id="ui-layer">
+                <div class="stat-box">
+                    <span>kendini koru ali</span>
+                </div>
+                <div class="stat-box">
+                    <span>💰 <span id="score">0,00</span></span>
+                    <span id="health" style="color:red;"></span>
+                </div>
+            </div>
+
+            <div id="player">
+                <img src="assets/character-ali.png" alt="Ali" style="width: 100%; height: 100%; object-fit: contain;">
+                <img src="assets/kilic.png" alt="Kılıç" class="weapon">
+            </div>
+
+            <div id="enemies-container"></div>
+        </div>
+    </div>
+
+    <!-- Bitiş Ekranı -->
+    <div id="game-over-screen-container">
+        <style>
+            /* GAME OVER EKRANI STİLLERİ */
+            #game-over-screen {
+                background: rgba(139, 69, 19, 0.8);
+                color: white;
+                opacity: 0;
+                transition: opacity 0.5s ease-in;
+            }
+            #game-over-screen.show {
+                opacity: 1;
+            }
+            .cry-face {
+                font-size: 50px;
+                margin: 10px;
+            }
+            .game-over-title {
+                font-size: 50px;
+                font-style: italic;
+                letter-spacing: 5px;
+                margin-bottom: 10px;
+                color: black;
+                text-shadow: 2px 2px white;
+            }
+        </style>
+
+        <!-- Bitiş Ekranı -->
+        <div id="game-over-screen" class="screen hidden">
+            <div style="text-align: center;">
+                <div style="display: flex; justify-content: space-between; width: 300px; margin: 0 auto;">
+                    <div class="cry-face">😓</div>
+                    <div class="cry-face">😭</div>
+                </div>
+                
+                <div style="color: #000; font-weight: bold; margin-bottom: -10px;">0,00</div>
+                <h2 class="game-over-title">game over</h2>
+
+                <button class="btn" onclick="resetGame()">baştan başla</button>  
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- JavaScript Dosyası -->
+<script src="js/game-functions.js"></script>
+
+<script>
+    // Sayfa yüklendiğinde game fonksiyonlarını başlat
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof initGameVariables === 'function') {
+            initGameVariables();
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<style>
+    /* GAME OVER EKRANI STİLLERİ */
+    #game-over-screen {
+        background: rgba(139, 69, 19, 0.8);
+        color: white;
+        opacity: 0;
+        transition: opacity 0.5s ease-in;
+    }
+    #game-over-screen.show {
+        opacity: 1;
+    }
+    .cry-face {
+        font-size: 50px;
+        margin: 10px;
+    }
+    .game-over-title {
+        font-size: 50px;
+        font-style: italic;
+        letter-spacing: 5px;
+        margin-bottom: 10px;
+        color: black;
+        text-shadow: 2px 2px white;
+    }
+</style>
+
+<!-- Bitiş Ekranı -->
+<div id="game-over-screen" class="screen hidden">
+    <div style="text-align: center;">
+        <div style="display: flex; justify-content: space-between; width: 300px; margin: 0 auto;">
+            <div class="cry-face">😓</div>
+            <div class="cry-face">😭</div>
+        </div>
+        
+        <div style="color: #000; font-weight: bold; margin-bottom: -10px;">0,00</div>
+        <h2 class="game-over-title">game over</h2>
+
+        <button class="btn" onclick="resetGame()">baştan başla</button>  
+    </div>
+</div>
+
