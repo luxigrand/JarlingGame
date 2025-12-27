@@ -6,10 +6,15 @@ let spawnLoop;
 let isGameRunning = false;
 let score = 0;
 let health = 3;
-const maxHealth = 3;
+let maxHealth = 3;
 let enemies = [];
 let gameSpeed = 4; 
-let spawnRate = 1500; 
+let spawnRate = 1500;
+
+// Mağaza ve Toplam Skor Sistemi
+let totalScore = 0;
+let purchasedItems = {};
+let isShopOpen = false; 
 
 const enemyTypes = ['🔥'];
 
@@ -25,6 +30,9 @@ function startGame() {
     document.getElementById('start-screen').classList.add('hidden');
     document.getElementById('game-over-screen').classList.add('hidden');
     document.getElementById('game-screen').classList.remove('hidden');
+    
+    // Satın alınan öğeleri uygula
+    applyPurchasedItems();
     
     // Tüm sesleri durdur
     stopAllSounds();
@@ -46,7 +54,7 @@ function startGame() {
     }
     
     score = 0;
-    health = 3; 
+    health = maxHealth; 
     updateUI();
     
     enemies = [];
@@ -93,6 +101,9 @@ function gameOver() {
     isGameRunning = false;
     clearInterval(spawnLoop);
     cancelAnimationFrame(gameLoop);
+    
+    // Skoru toplam skora ekle
+    addScoreToTotal(score);
     
     // Arka plan müziğini durdur
     const bgMusic = document.getElementById('background-music');
@@ -166,7 +177,12 @@ function spawnEnemy() {
 }
 
 function update() {
-    if (!isGameRunning) return;
+    if (!isGameRunning || isShopOpen) {
+        if (isGameRunning && !isShopOpen) {
+            gameLoop = requestAnimationFrame(update);
+        }
+        return;
+    }
 
     enemies.forEach((enemy, index) => {
         if (enemy.active && enemy.element) {
@@ -211,8 +227,16 @@ function takeDamage() {
 }
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' && isGameRunning) {
+    if (event.code === 'Space' && isGameRunning && !isShopOpen) {
         attack();
+    }
+    // ESC tuşu ile mağazayı aç/kapat
+    if (event.code === 'Escape' && isGameRunning) {
+        if (isShopOpen) {
+            closeShop();
+        } else {
+            openShop();
+        }
     }
 });
 
@@ -387,7 +411,7 @@ function checkLineSegmentVsAABB(weapon, enemyRect) {
 }
 
 function attack() {
-    if (!player) return;
+    if (!player || isShopOpen) return;
     
     player.classList.add('attacking');
     
@@ -401,7 +425,9 @@ function attack() {
     }
 
     const hitEnemies = new Set();
-    const animationDuration = 150;
+    // Saldırı hızı güçlendirmesi uygula
+    const baseAnimationDuration = 150;
+    const animationDuration = baseAnimationDuration * attackSpeedMultiplier;
     const startTime = Date.now();
     
     function checkCollision() {
@@ -463,7 +489,13 @@ function attack() {
                     });
                 }
                 
-                score += 100;
+                // Hasar çarpanı ve bonus hasarı uygula
+                const weaponData = shopItems.weapons.find(w => w.id === currentWeapon);
+                const damageMultiplier = weaponData ? weaponData.damageMultiplier : 1.0;
+                const baseScore = 100;
+                const finalScore = Math.floor(baseScore * damageMultiplier) + damageBonus;
+                
+                score += finalScore;
                 updateUI();
 
                 setTimeout(() => {
@@ -472,7 +504,7 @@ function attack() {
                     }
                 }, 200);
 
-                showHitEffect(enemy.x, 250);
+                showHitEffect(enemy.x, 250, `+${finalScore}`);
             }
         });
         
@@ -488,10 +520,10 @@ function attack() {
     }, 10);
 }
 
-function showHitEffect(x, y) {
+function showHitEffect(x, y, text = "+100") {
     const effect = document.createElement('div');
     effect.classList.add('hit-effect');
-    effect.innerText = "+100";
+    effect.innerText = text;
     effect.style.left = x + 'px';
     effect.style.top = y + 'px';
     const gameScreen = document.getElementById('game-screen');
@@ -519,8 +551,309 @@ function updateUI() {
     }
 }
 
+// ========== ÖĞE TANIMLARI ==========
+
+const shopItems = {
+    weapons: [
+        {
+            id: 'weapon_basic',
+            name: 'Temel Kılıç',
+            icon: '⚔️',
+            description: 'Başlangıç silahı',
+            price: 0,
+            image: 'assets/kilic.png',
+            damageMultiplier: 1.0
+        },
+        {
+            id: 'weapon_iron',
+            name: 'Demir Kılıç',
+            icon: '⚔️',
+            description: '%20 hasar artışı',
+            price: 500,
+            image: 'assets/kilic.png',
+            damageMultiplier: 1.2
+        },
+        {
+            id: 'weapon_gold',
+            name: 'Altın Kılıç',
+            icon: '⚔️',
+            description: '%50 hasar artışı',
+            price: 1500,
+            image: 'assets/kilic.png',
+            damageMultiplier: 1.5
+        },
+        {
+            id: 'weapon_legendary',
+            name: 'Efsanevi Kılıç',
+            icon: '⚔️',
+            description: '%100 hasar artışı',
+            price: 3000,
+            image: 'assets/kilic.png',
+            damageMultiplier: 2.0
+        }
+    ],
+    health: [
+        {
+            id: 'health_boost_1',
+            name: 'Can Artırma I',
+            icon: '❤️',
+            description: '+1 maksimum can',
+            price: 1000,
+            healthIncrease: 1
+        },
+        {
+            id: 'health_boost_2',
+            name: 'Can Artırma II',
+            icon: '❤️',
+            description: '+1 maksimum can (toplam +2)',
+            price: 2500,
+            healthIncrease: 1
+        }
+    ],
+    powerups: [
+        {
+            id: 'powerup_fast_attack',
+            name: 'Hızlı Saldırı',
+            icon: '⚡',
+            description: 'Saldırı hızı %25 artar',
+            price: 800,
+            attackSpeedMultiplier: 0.75
+        },
+        {
+            id: 'powerup_strong_attack',
+            name: 'Güçlü Saldırı',
+            icon: '💪',
+            description: 'Hasar çarpanı +50',
+            price: 1200,
+            damageBonus: 50
+        }
+    ]
+};
+
+// Oyun değişkenleri (güçlendirmeler için)
+let currentWeapon = 'weapon_basic';
+let attackSpeedMultiplier = 1.0;
+let damageBonus = 0;
+
+// ========== TOPLAM SKOR SİSTEMİ ==========
+
+function loadTotalScore() {
+    const saved = localStorage.getItem('jarling_totalScore');
+    if (saved) {
+        totalScore = parseFloat(saved) || 0;
+    } else {
+        totalScore = 0;
+    }
+}
+
+function saveTotalScore() {
+    localStorage.setItem('jarling_totalScore', totalScore.toString());
+}
+
+function addScoreToTotal(amount) {
+    totalScore += amount;
+    saveTotalScore();
+    updateShopUI();
+}
+
+// ========== SATIN ALINAN ÖĞELER SİSTEMİ ==========
+
+function loadPurchasedItems() {
+    const saved = localStorage.getItem('jarling_purchasedItems');
+    if (saved) {
+        try {
+            purchasedItems = JSON.parse(saved);
+        } catch (e) {
+            purchasedItems = {};
+        }
+    } else {
+        purchasedItems = {};
+    }
+}
+
+function savePurchasedItems() {
+    localStorage.setItem('jarling_purchasedItems', JSON.stringify(purchasedItems));
+}
+
+function hasPurchasedItem(itemId) {
+    return purchasedItems[itemId] === true;
+}
+
+// ========== MAĞAZA SİSTEMİ ==========
+
+function openShop() {
+    if (!isGameRunning) return;
+    
+    isShopOpen = true;
+    const shopScreen = document.getElementById('shop-screen');
+    if (shopScreen) {
+        shopScreen.classList.remove('hidden');
+        setTimeout(() => {
+            shopScreen.classList.add('show');
+        }, 10);
+        updateShopUI();
+    }
+    // Oyunu duraklat (spawn döngüsünü durdur)
+    if (spawnLoop) {
+        clearInterval(spawnLoop);
+        spawnLoop = null;
+    }
+}
+
+function closeShop() {
+    isShopOpen = false;
+    const shopScreen = document.getElementById('shop-screen');
+    if (shopScreen) {
+        shopScreen.classList.remove('show');
+        setTimeout(() => {
+            shopScreen.classList.add('hidden');
+        }, 300);
+    }
+    // Oyunu devam ettir (spawn döngüsünü yeniden başlat)
+    if (isGameRunning && !spawnLoop) {
+        spawnLoop = setInterval(spawnEnemy, spawnRate);
+    }
+}
+
+function updateShopUI() {
+    // Toplam skor gösterimi
+    const totalScoreEl = document.getElementById('total-score-display');
+    if (totalScoreEl) {
+        totalScoreEl.textContent = totalScore.toFixed(2);
+    }
+    
+    // Silahlar
+    renderShopCategory('weapons-container', shopItems.weapons);
+    
+    // Can artırma
+    renderShopCategory('health-container', shopItems.health);
+    
+    // Güçlendirmeler
+    renderShopCategory('powerups-container', shopItems.powerups);
+}
+
+function renderShopCategory(containerId, items) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    items.forEach(item => {
+        const isPurchased = hasPurchasedItem(item.id);
+        const canAfford = totalScore >= item.price && !isPurchased;
+        
+        const itemDiv = document.createElement('div');
+        itemDiv.className = `shop-item ${isPurchased ? 'purchased' : ''}`;
+        
+        itemDiv.innerHTML = `
+            <div class="item-icon">${item.icon}</div>
+            <div class="item-name">${item.name}</div>
+            <div class="item-description">${item.description}</div>
+            <div class="item-price">💰 ${item.price.toFixed(2)}</div>
+            <button class="shop-btn" 
+                    onclick="purchaseItem('${item.id}')" 
+                    ${isPurchased ? 'disabled' : ''}
+                    ${!canAfford && !isPurchased ? 'disabled' : ''}>
+                ${isPurchased ? '✓ SATIN ALINDI' : 'Satın Al'}
+            </button>
+        `;
+        
+        container.appendChild(itemDiv);
+    });
+}
+
+function canAfford(price) {
+    return totalScore >= price;
+}
+
+function purchaseItem(itemId) {
+    // Öğeyi bul
+    let item = null;
+    let category = null;
+    
+    for (const cat in shopItems) {
+        const found = shopItems[cat].find(i => i.id === itemId);
+        if (found) {
+            item = found;
+            category = cat;
+            break;
+        }
+    }
+    
+    if (!item) return;
+    
+    // Zaten satın alınmış mı?
+    if (hasPurchasedItem(itemId)) {
+        return;
+    }
+    
+    // Yeterli para var mı?
+    if (!canAfford(item.price)) {
+        return;
+    }
+    
+    // Satın al
+    totalScore -= item.price;
+    purchasedItems[itemId] = true;
+    
+    saveTotalScore();
+    savePurchasedItems();
+    updateShopUI();
+    applyPurchasedItems();
+}
+
+function applyPurchasedItems() {
+    // En yüksek seviye silahı bul ve uygula
+    const weaponOrder = ['weapon_legendary', 'weapon_gold', 'weapon_iron', 'weapon_basic'];
+    for (const weaponId of weaponOrder) {
+        if (hasPurchasedItem(weaponId) || weaponId === 'weapon_basic') {
+            currentWeapon = weaponId;
+            const weapon = shopItems.weapons.find(w => w.id === weaponId);
+            if (weapon) {
+                const weaponImg = document.querySelector('.weapon');
+                if (weaponImg) {
+                    weaponImg.src = weapon.image;
+                }
+            }
+            break;
+        }
+    }
+    
+    // Can artırma uygula
+    let healthIncrease = 0;
+    shopItems.health.forEach(healthItem => {
+        if (hasPurchasedItem(healthItem.id)) {
+            healthIncrease += healthItem.healthIncrease;
+        }
+    });
+    maxHealth = 3 + healthIncrease;
+    
+    // Mevcut can'ı maxHealth'e ayarla (eğer daha yüksekse)
+    if (health > maxHealth) {
+        health = maxHealth;
+    }
+    
+    // Güçlendirmeleri uygula
+    attackSpeedMultiplier = 1.0;
+    damageBonus = 0;
+    
+    if (hasPurchasedItem('powerup_fast_attack')) {
+        attackSpeedMultiplier = 0.75;
+    }
+    
+    if (hasPurchasedItem('powerup_strong_attack')) {
+        damageBonus = 50;
+    }
+    
+    // UI'ı güncelle
+    updateUI();
+}
+
 // Sayfa yüklendiğinde çalıştır
 document.addEventListener('DOMContentLoaded', function() {
     initGameVariables();
+    loadTotalScore();
+    loadPurchasedItems();
+    applyPurchasedItems();
 });
 
