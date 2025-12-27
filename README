@@ -1,1 +1,20 @@
-Jarling bir ders projesidir, sadece oyun oluşturmak için yapılmıştır.
+Jarling bir ders projesidir ve temel amacı, yazılım geliştirme ve programlama prensiplerini öğrenmektir. Sadece oyun oluşturmak için değil, aynı zamanda yazılım mühendisliği süreçlerini, temiz kod yazımını, proje yönetimi ve takım çalışmasını deneyimlemek amacıyla hazırlanmıştır.
+
+Projede, farklı programlama kavramlarını uygulamayı, algoritma geliştirmeyi ve gerçek dünya problemlerine çözüm üretmeyi hedefliyoruz. Katkıda bulunmak isterseniz, lütfen "Katkıda Bulunma Rehberi" kısmını inceleyin.
+
+Kurulum, gereksinimler ve örnek kullanım hakkında daha fazla bilgi için aşağıdaki başlıkları inceleyebilirsiniz:
+
+## Kurulum
+
+1. Projeyi klonlayın:  
+   `git clone https://github.com/kullanici/jarling.git`
+2. Gerekli ortam değişkenlerini ve bağımlılıkları kurun.
+3. Kendi geliştirme ortamınızda çalıştırın.
+
+## Katkıda Bulunma
+
+Pull request gönderebilir veya issue açabilirsiniz. Fikir ve önerilere açığız.
+
+## Lisans
+
+Bu proje MIT lisansı ile lisanslanmıştır.

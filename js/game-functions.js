@@ -227,7 +227,15 @@ function takeDamage() {
 }
 
 document.addEventListener('keydown', function(event) {
-    if (event.code === 'Space' && isGameRunning && !isShopOpen) {
+    if (event.code === 'Space' && isGameRunning) {
+        event.preventDefault();
+        attack();
+    }
+});
+
+// Mouse click ile saldırı
+document.addEventListener('click', function(event) {
+    if (isGameRunning) {
         attack();
     }
     // ESC tuşu ile mağazayı aç/kapat
