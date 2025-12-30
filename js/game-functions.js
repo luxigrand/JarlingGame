@@ -102,8 +102,10 @@ function gameOver() {
     clearInterval(spawnLoop);
     cancelAnimationFrame(gameLoop);
     
-    // Skoru toplam skora ekle
-    addScoreToTotal(score);
+    // Skoru toplam skora ekle (sadece skor varsa)
+    if (score > 0) {
+        addScoreToTotal(score);
+    }
     
     // Arka plan müziğini durdur
     const bgMusic = document.getElementById('background-music');
@@ -690,7 +692,13 @@ function hasPurchasedItem(itemId) {
 // ========== MAĞAZA SİSTEMİ ==========
 
 function openShop() {
-    if (!isGameRunning) return;
+    if (!isGameRunning) {
+        console.log('Oyun çalışmıyor, mağaza açılamaz');
+        return;
+    }
+    
+    // totalScore'u yükle (emin olmak için)
+    loadTotalScore();
     
     isShopOpen = true;
     const shopScreen = document.getElementById('shop-screen');
@@ -700,11 +708,14 @@ function openShop() {
             shopScreen.classList.add('show');
         }, 10);
         updateShopUI();
+    } else {
+        console.error('Mağaza ekranı bulunamadı!');
     }
     // Oyunu duraklat (spawn döngüsünü durdur)
     if (spawnLoop) {
         clearInterval(spawnLoop);
         spawnLoop = null;
+        console.log('Oyun duraklatıldı');
     }
 }
 
@@ -718,9 +729,13 @@ function closeShop() {
         }, 300);
     }
     // Oyunu devam ettir (spawn döngüsünü yeniden başlat)
-    if (isGameRunning && !spawnLoop) {
-        spawnLoop = setInterval(spawnEnemy, spawnRate);
-    }
+    // setTimeout ile biraz gecikme ekle ki animasyon tamamlansın
+    setTimeout(() => {
+        if (isGameRunning && !spawnLoop) {
+            spawnLoop = setInterval(spawnEnemy, spawnRate);
+            console.log('Oyun devam ediyor, spawn döngüsü başlatıldı');
+        }
+    }, 350);
 }
 
 function updateShopUI() {
@@ -738,6 +753,8 @@ function updateShopUI() {
     
     // Güçlendirmeler
     renderShopCategory('powerups-container', shopItems.powerups);
+    
+    console.log('Mağaza UI güncellendi, toplam skor:', totalScore);
 }
 
 function renderShopCategory(containerId, items) {
@@ -788,15 +805,20 @@ function purchaseItem(itemId) {
         }
     }
     
-    if (!item) return;
+    if (!item) {
+        console.log('Öğe bulunamadı:', itemId);
+        return;
+    }
     
     // Zaten satın alınmış mı?
     if (hasPurchasedItem(itemId)) {
+        console.log('Bu öğe zaten satın alınmış');
         return;
     }
     
     // Yeterli para var mı?
     if (!canAfford(item.price)) {
+        alert('Yetersiz para! Gerekli: ' + item.price.toFixed(2) + ', Mevcut: ' + totalScore.toFixed(2));
         return;
     }
     
@@ -808,6 +830,8 @@ function purchaseItem(itemId) {
     savePurchasedItems();
     updateShopUI();
     applyPurchasedItems();
+    
+    console.log('Satın alındı:', item.name);
 }
 
 function applyPurchasedItems() {
