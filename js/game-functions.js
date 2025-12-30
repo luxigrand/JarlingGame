@@ -242,6 +242,8 @@ document.addEventListener('click', function(event) {
     }
     // ESC tuşu ile mağazayı aç/kapat
     if (event.code === 'Escape' && isGameRunning) {
+        console.log('ESC tuşu basıldı, isShopOpen:', isShopOpen);
+        event.preventDefault();
         if (isShopOpen) {
             closeShop();
         } else {
@@ -692,24 +694,34 @@ function hasPurchasedItem(itemId) {
 // ========== MAĞAZA SİSTEMİ ==========
 
 function openShop() {
+    console.log('openShop çağrıldı, isGameRunning:', isGameRunning);
+    
+    // Test için oyun çalışmasa bile açılabilir
     if (!isGameRunning) {
-        console.log('Oyun çalışmıyor, mağaza açılamaz');
-        return;
+        console.log('Oyun çalışmıyor ama mağaza test için açılıyor...');
+        // return; // Test için comment out edildi
     }
     
     // totalScore'u yükle (emin olmak için)
     loadTotalScore();
+    console.log('Toplam skor yüklendi:', totalScore);
     
     isShopOpen = true;
     const shopScreen = document.getElementById('shop-screen');
+    console.log('Shop screen element:', shopScreen);
+    
     if (shopScreen) {
+        console.log('Shop screen bulundu, gösteriliyor...');
         shopScreen.classList.remove('hidden');
         setTimeout(() => {
             shopScreen.classList.add('show');
+            console.log('Shop screen gösterildi');
         }, 10);
         updateShopUI();
     } else {
-        console.error('Mağaza ekranı bulunamadı!');
+        console.error('Mağaza ekranı bulunamadı! DOM kontrol ediliyor...');
+        const shopContainer = document.getElementById('shop-screen-container');
+        console.log('Shop container:', shopContainer);
     }
     // Oyunu duraklat (spawn döngüsünü durdur)
     if (spawnLoop) {
@@ -720,13 +732,18 @@ function openShop() {
 }
 
 function closeShop() {
+    console.log('closeShop çağrıldı');
     isShopOpen = false;
     const shopScreen = document.getElementById('shop-screen');
     if (shopScreen) {
+        console.log('Shop screen kapatılıyor...');
         shopScreen.classList.remove('show');
         setTimeout(() => {
             shopScreen.classList.add('hidden');
+            console.log('Shop screen gizlendi');
         }, 300);
+    } else {
+        console.error('Shop screen bulunamadı!');
     }
     // Oyunu devam ettir (spawn döngüsünü yeniden başlat)
     // setTimeout ile biraz gecikme ekle ki animasyon tamamlansın
@@ -887,5 +904,30 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTotalScore();
     loadPurchasedItems();
     applyPurchasedItems();
+    
+    // Fonksiyonları global scope'a ekle (onclick handler'lar için)
+    window.openShop = openShop;
+    window.closeShop = closeShop;
+    window.purchaseItem = purchaseItem;
+    
+    // Test fonksiyonu
+    window.testShop = function() {
+        console.log('=== MAĞAZA TEST ===');
+        console.log('isGameRunning:', isGameRunning);
+        console.log('isShopOpen:', isShopOpen);
+        console.log('totalScore:', totalScore);
+        console.log('Shop screen:', document.getElementById('shop-screen'));
+        console.log('Shop container:', document.getElementById('shop-screen-container'));
+        console.log('Weapons container:', document.getElementById('weapons-container'));
+        console.log('Health container:', document.getElementById('health-container'));
+        console.log('Powerups container:', document.getElementById('powerups-container'));
+        console.log('openShop function:', typeof openShop);
+        console.log('closeShop function:', typeof closeShop);
+        console.log('purchaseItem function:', typeof purchaseItem);
+    };
+    
+    console.log('Mağaza fonksiyonları global scope\'a eklendi');
+    console.log('Shop screen element:', document.getElementById('shop-screen'));
+    console.log('Test için: testShop() fonksiyonunu console\'da çalıştırın');
 });
 
